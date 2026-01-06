@@ -1,0 +1,16 @@
+{
+  "name": "cli-expensetracker",
+  "version": "1.0.0",
+  "description": "This is a simple expense tracker application to manage finances. The application should allow users to add, delete, and view their expenses, as well as provide summaries and information of the expenses.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Juancarlos Alguera",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^14.0.2",
+    "express": "^5.2.1"
+  }
+}
