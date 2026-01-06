@@ -4,7 +4,7 @@ const PORT = 3000; //define a port
 
 app.use(express.json()); //middleware to parse JSON bodies
 
-let expenses = []; //in-memory array to store expenses
+let expenses = loadExpenses(); //in-memory array to store expenses
 let idCounter = 0; //simple id counter
 
 app.get('/expenses', (req, res) => {
@@ -12,31 +12,60 @@ app.get('/expenses', (req, res) => {
 });
 
 app.post('/expenses', (req, res) => {
-    const { description, amount } = req.body; //req.body is the data sent by client
+    const data = req.body; //req.body is the data sent by client
 
-    const newExpense = { 
-        id: ++idCounter,
-        description: description,
-        amount: parseFloat(amount),
-        date: new Date().toISOString().split('T')[0]
+    if(Array.isArray(data)){
+        const addedList = []; //just to send as json response
+        data.forEach(e => {
+        const {description, amount} = e;
+        const newExpense = { 
+            id: ++idCounter,
+            description: description,
+            amount: parseFloat(amount),
+            date: new Date().toISOString().split('T')[0]
+        };
+        expenses.push(newExpense); //add new expense to the array
+        addedList.push(newExpense)
+        });
+        res.json({message: 'Expenses were successfully added.', expense: addedList});
+    }
+    else {
+        const {description, amount} = data;
+        const newExpense = { 
+            id: ++idCounter,
+            description: description,
+            amount: parseFloat(amount),
+            date: new Date().toISOString().split('T')[0]
+        };
+        expenses.push(newExpense); //add new expense to the array
+        res.json({message: 'Expense was successfully added.', expense: newExpense});
+    }
 
-
-
-    };
-    expenses.push(newExpense); //add new expense to the array
-    res.json({message: 'Expense was successfully added.', expense: newExpense});
 });
 
 app.delete('/expenses/:id', (req, res) => {
-    const expenseID = parseInt(req.params.id);
-    expenses = expenses.filter(e => e.id !== expensesID); //returns every expense except the one to delete
-    res.json({message: `Expense with ID ${expenseID} was successfully deleted.`});
-    
+    const expenseID = parseInt(req.params.id, 10);
+    if (!expenses.some(e => e.id === expenseID)) //some is slightly better than find because we don't need to directly use the element
+        return res.status(404).json({message: `Expense with ID ${expenseID} not found.`});
+    expenses = expenses.filter(e => e.id !== expenseID); //returns every expense except the one to delete
+    res.json({message: `Expense with ID ${expenseID} was successfully deleted.`});        
 });
 
 app.get('/expenses/summary', (req, res) => {
-    const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    //sum is accumulator and expense is current value, sum starting from value 0
+    const total = parseFloat(expenses.reduce((sum, expense) => sum + expense.amount, 0));
     res.json({message: `Total expense is ${total}`});
+});
+
+app.patch('/expenses/:id', (req, res) => {
+    const updateID = parseInt(req.params.id);
+    const updatedExpense = expenses.find(e => e.id === updateID); //find is better because it directly returns the element, we will use it
+    if (!updatedExpense)
+        return res.status(404).json({message: `Expense with ID ${updateID} not found.`});
+    const updatedData = req.body;
+    updatedData.description == null ? void 0 : updatedExpense.description = updatedData.description;
+    updatedData.amount == null ? void 0 : updatedExpense.amount = parseFloat(updatedData.amount);
+        res.json({message: 'new values updated', expense:updatedExpense});
 });
 
 app.listen(PORT, () => {
