@@ -1,4 +1,5 @@
 const express = require('express');
+const { loadExpenses, saveExpenses } = require('./expenseService');
 const app = express(); //create an express application
 const PORT = 3000; //define a port
 
@@ -27,7 +28,13 @@ app.post('/expenses', (req, res) => {
         expenses.push(newExpense); //add new expense to the array
         addedList.push(newExpense)
         });
-        res.json({message: 'Expenses were successfully added.', expense: addedList});
+        try {
+            saveExpenses(expenses);
+            res.json({message: 'Expenses were successfully added.', expense: addedList});
+        } catch (error) {
+            console.error('Error in POST endpoint:', error);
+            res.status(500).json({ error: 'Failed to save' });
+        }
     }
     else {
         const {description, amount} = data;
@@ -38,7 +45,13 @@ app.post('/expenses', (req, res) => {
             date: new Date().toISOString().split('T')[0]
         };
         expenses.push(newExpense); //add new expense to the array
-        res.json({message: 'Expense was successfully added.', expense: newExpense});
+        try {
+            saveExpenses(expenses);
+            res.json({message: 'Expense was successfully added.', expense: newExpense});
+        } catch (error) {
+            console.error('Error in POST endpoint:', error);
+            res.status(500).json({ error: 'Failed to save' });
+        }
     }
 
 });
@@ -48,7 +61,14 @@ app.delete('/expenses/:id', (req, res) => {
     if (!expenses.some(e => e.id === expenseID)) //some is slightly better than find because we don't need to directly use the element
         return res.status(404).json({message: `Expense with ID ${expenseID} not found.`});
     expenses = expenses.filter(e => e.id !== expenseID); //returns every expense except the one to delete
-    res.json({message: `Expense with ID ${expenseID} was successfully deleted.`});        
+    try {
+        saveExpenses(expenses);
+        res.json({message: `Expense with ID ${expenseID} was successfully deleted.`});  
+    } catch (error) {
+        console.error('Error in DELETE endpoint:', error);
+        res.status(500).json({ error: 'Failed to save' });
+    }
+          
 });
 
 app.get('/expenses/summary', (req, res) => {
@@ -65,7 +85,13 @@ app.patch('/expenses/:id', (req, res) => {
     const updatedData = req.body;
     updatedData.description == null ? void 0 : updatedExpense.description = updatedData.description;
     updatedData.amount == null ? void 0 : updatedExpense.amount = parseFloat(updatedData.amount);
+    try {
+        saveExpenses(expenses);
         res.json({message: 'new values updated', expense:updatedExpense});
+    } catch (error) {
+        console.error('Error in UPDATE/PATCH endpoint:', error);
+        res.status(500).json({ error: 'Failed to save' });
+    }
 });
 
 app.listen(PORT, () => {
